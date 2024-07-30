@@ -1,0 +1,72 @@
+plugins {
+    id 'java'
+    id 'io.quarkus' version '3.12.3'
+    id 'org.graalvm.buildtools.native' version '0.10.2'
+}
+
+group = 'org.example'
+version = '1.0-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-parameters'
+}
+
+compileTestJava {
+    options.encoding = 'UTF-8'
+}
+
+repositories {
+    mavenCentral()
+    mavenLocal()
+}
+
+dependencies {
+    implementation enforcedPlatform("${quarkusPlatformGroupId}:${quarkusPlatformArtifactId}:${quarkusPlatformVersion}")
+    implementation 'io.quarkus:quarkus-resteasy'
+    implementation 'io.quarkus:quarkus-resteasy-jsonb'
+    implementation 'io.quarkus:quarkus-resteasy-client'
+    implementation 'io.quarkus:quarkus-resteasy-client-jsonb'
+    implementation 'io.quarkus:quarkus-arc'
+    implementation 'io.quarkus:quarkus-core-deployment'
+    implementation 'org.graalvm.polyglot:polyglot:24.0.1'
+    implementation 'io.quarkus:quarkus-bootstrap-runner'
+
+    implementation 'io.quarkiverse.jberet:quarkus-jberet:2.3.1'
+    testImplementation 'io.quarkus:quarkus-junit5'
+    testImplementation 'io.rest-assured:rest-assured'
+    testImplementation platform('org.junit:junit-bom:5.9.1')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+graalvmNative {
+    testSupport = false
+    binaries {
+        main {
+            imageName = "graalQuarkusBatchPoc"
+            mainClass = "org.example.MainBatchApplication"
+            buildArgs.add('--no-fallback')
+            buildArgs.add('--link-at-build-time')
+            buildArgs.add('--initialize-at-build-time=org.jboss.logging,org.jboss.logmanager,io.quarkus.bootstrap.logging,io.smallrye.common')
+            buildArgs.add('-H:-ParseRuntimeOptions')
+            buildArgs.add('-H:+BuildReport')
+            buildArgs.add('-H:+UnlockExperimentalVMOptions')
+
+            buildArgs.add('-Dquarkus.profile=prod')
+            buildArgs.add('-Dquarkus.native.image.jvm-args="-Djava.library.path=build/quarkus-app/quarkus"')
+
+            buildArgs.add('-Djava.util.logging.manager=org.jboss.logmanager.LogManager')
+            buildArgs.add('-Djava.library.path=build/quarkus-app/quarkus')
+        }
+    }
+}
+
+
+test {
+    useJUnitPlatform()
+}
